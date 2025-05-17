@@ -1,0 +1,63 @@
+{
+  "app": {
+    "title": "Serverless News Platform",
+    "tagline": "Stay informed with the latest articles"
+  },
+  "navigation": {
+    "home": "Home",
+    "create": "Create Article",
+    "analytics": "Analytics",
+    "admin": "Admin"
+  },
+  "articles": {
+    "title": "Latest Articles",
+    "readMore": "Read more",
+    "by": "By",
+    "empty": "No articles found. Create your first one!",
+    "loading": "Loading articles..."
+  },
+  "create": {
+    "title": "Create New Article",
+    "form": {
+      "title": "Title",
+      "author": "Author",
+      "content": "Content",
+      "publish": "Publish Article",
+      "publishing": "Publishing..."
+    },
+    "success": "Article published successfully!",
+    "error": "Error creating article"
+  },
+  "detail": {
+    "loading": "Loading article...",
+    "notFound": "Article not found",
+    "metrics": {
+      "title": "Metrics",
+      "views": "Views",
+      "timeSpent": "Average Time Spent",
+      "seconds": "seconds",
+      "rating": "Rating"
+    }
+  },
+  "analytics": {
+    "title": "Analytics Dashboard",
+    "totalArticles": "Total Articles",
+    "topAuthors": "Top Authors",
+    "recentActivity": "Recent Publishing Activity",
+    "noData": "No author data available"
+  },
+  "admin": {
+    "title": "Admin Control Panel",
+    "contentStatistics": "Content Statistics",
+    "totalArticles": "Total Articles",
+    "uniqueAuthors": "Unique Authors",
+    "avgContentLength": "Avg. Content Length",
+    "topAuthors": "Top Authors",
+    "author": "Author",
+    "articles": "Articles",
+    "contentManagement": "Content Management",
+    "triggerRssImport": "Trigger RSS Import",
+    "refreshData": "Refresh Data",
+    "loading": "Loading admin data..."
+  }
+}

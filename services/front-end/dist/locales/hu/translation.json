@@ -1,0 +1,63 @@
+{
+  "app": {
+    "title": "Szervermenteses Hírek Platform",
+    "tagline": "Maradjon naprakész a legfrissebb cikkekkel"
+  },
+  "navigation": {
+    "home": "Főoldal",
+    "create": "Új Cikk",
+    "analytics": "Elemzés",
+    "admin": "Admin"
+  },
+  "articles": {
+    "title": "Legfrissebb Cikkek",
+    "readMore": "Tovább",
+    "by": "Szerző",
+    "empty": "Nincsenek cikkek. Írja meg az elsőt!",
+    "loading": "Cikkek betöltése..."
+  },
+  "create": {
+    "title": "Új Cikk Írása",
+    "form": {
+      "title": "Cím",
+      "author": "Szerző",
+      "content": "Tartalom",
+      "publish": "Közzététel",
+      "publishing": "Közzététel..."
+    },
+    "success": "A cikk sikeresen közzétéve!",
+    "error": "Hiba a cikk létrehozásakor"
+  },
+  "detail": {
+    "loading": "Cikk betöltése...",
+    "notFound": "A cikk nem található",
+    "metrics": {
+      "title": "Metrikák",
+      "views": "Megtekintések",
+      "timeSpent": "Átlagos időtartam",
+      "seconds": "másodperc",
+      "rating": "Értékelés"
+    }
+  },
+  "analytics": {
+    "title": "Elemzési Műszerfal",
+    "totalArticles": "Összes Cikk",
+    "topAuthors": "Legjobb Szerzők",
+    "recentActivity": "Legutóbbi Tevékenység",
+    "noData": "Nincsenek szerzői adatok"
+  },
+  "admin": {
+    "title": "Admin Vezérlőpult",
+    "contentStatistics": "Tartalom Statisztikák",
+    "totalArticles": "Összes Cikk",
+    "uniqueAuthors": "Egyedi Szerzők",
+    "avgContentLength": "Átlagos Hossz",
+    "topAuthors": "Legjobb Szerzők",
+    "author": "Szerző",
+    "articles": "Cikkek",
+    "contentManagement": "Tartalom Kezelés",
+    "triggerRssImport": "RSS Importálás",
+    "refreshData": "Adatok Frissítése",
+    "loading": "Admin adatok betöltése..."
+  }
+}

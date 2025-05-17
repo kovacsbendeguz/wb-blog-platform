@@ -1,0 +1,16 @@
+{
+  "name": "wb-blog-platform",
+  "version": "1.0.0",
+  "main": "index.js",
+  "private": true,
+  "workspaces": [
+    "infra",
+    "services/*"
+  ],
+  "scripts": {
+    "build": "yarn workspace infra build && yarn workspace api build",
+    "deploy": "yarn workspace infra deploy"
+  },
+  "author": "kovacsbendeguz <kovacsbendeguz00@gmail.com>",
+  "license": "MIT"
+}

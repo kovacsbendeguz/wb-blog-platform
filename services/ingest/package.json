@@ -1,0 +1,25 @@
+{
+  "name": "ingest",
+  "version": "1.0.0",
+  "main": "dist/rssIngest.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.810.0",
+    "@aws-sdk/util-dynamodb": "^3.810.0",
+    "rss-parser": "^3.13.0",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.92",
+    "@types/jest": "^29.0.0",
+    "@types/node": "^18.0.0",
+    "@types/uuid": "^10.0.0",
+    "jest": "^29.0.0",
+    "ts-jest": "^29.0.0",
+    "typescript": "^5.0.0"
+  }
+}
