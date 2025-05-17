@@ -6,7 +6,6 @@ const util_dynamodb_1 = require("@aws-sdk/util-dynamodb");
 const dbClient_1 = require("../lib/dbClient");
 const uuid_1 = require("uuid");
 const TABLE = process.env.TABLE_NAME;
-// Common headers for CORS
 const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Credentials': true,
@@ -46,10 +45,21 @@ const handler = async (event) => {
                 })
             };
         }
+        const articleId = (0, uuid_1.v4)();
+        const now = new Date().toISOString();
         const item = {
-            articleId: (0, uuid_1.v4)(),
-            ...data,
-            publishedAt: new Date().toISOString()
+            PK: 'ARTICLE',
+            articleId,
+            publishedAt: now,
+            title: data.title,
+            content: data.content,
+            author: data.author,
+            createdAt: now,
+            metrics: {
+                views: 0,
+                timeSpent: 0,
+                rating: 0
+            }
         };
         // Convert plain JS object to DynamoDB attribute values
         const dbItem = (0, util_dynamodb_1.marshall)(item, { removeUndefinedValues: true });

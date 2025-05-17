@@ -25,7 +25,7 @@ export class ApiStack extends Stack {
       autoDeleteObjects: true
     });
 
-    // GET /articles
+    // GET /articles and GET /articles/{id}
     const getArticlesFn = new NodejsFunction(this, 'GetArticlesFn', {
       runtime: lambda.Runtime.NODEJS_18_X,
       entry: path.join(__dirname, '../../services/api/src/handlers/getArticles.ts'),
@@ -44,6 +44,26 @@ export class ApiStack extends Stack {
       environment: { TABLE_NAME: tableName },
     });
     props.databaseStack.articlesTable.grantWriteData(postArticleFn);
+
+    // POST /articles/{id}/metrics
+    const updateMetricsFn = new NodejsFunction(this, 'UpdateMetricsFn', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      entry: path.join(__dirname, '../../services/api/src/handlers/updateMetrics.ts'),
+      handler: 'handler',
+      depsLockFilePath: lockFile,
+      environment: { TABLE_NAME: tableName },
+    });
+    props.databaseStack.articlesTable.grantReadWriteData(updateMetricsFn);
+
+    // GET /analytics/engagement
+    const getEngagementStatsFn = new NodejsFunction(this, 'GetEngagementStatsFn', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      entry: path.join(__dirname, '../../services/api/src/handlers/getEngagementStats.ts'),
+      handler: 'handler',
+      depsLockFilePath: lockFile,
+      environment: { TABLE_NAME: tableName },
+    });
+    props.databaseStack.articlesTable.grantReadData(getEngagementStatsFn);
 
     // Scheduled export job (10 UTC daily)
     const exportJobFn = new NodejsFunction(this, 'ExportJobFn', {
@@ -99,6 +119,13 @@ export class ApiStack extends Stack {
     
     const articleById = articles.addResource('{id}');
     articleById.addMethod('GET', new apigw.LambdaIntegration(getArticlesFn));
+
+    const metricsResource = articleById.addResource('metrics');
+    metricsResource.addMethod('POST', new apigw.LambdaIntegration(updateMetricsFn));
+
+    const analytics = api.root.addResource('analytics');
+    const engagement = analytics.addResource('engagement');
+    engagement.addMethod('GET', new apigw.LambdaIntegration(getEngagementStatsFn));
 
     const ingest = api.root.addResource('ingest');
     ingest.addMethod('POST', new apigw.LambdaIntegration(rssIngestFn));

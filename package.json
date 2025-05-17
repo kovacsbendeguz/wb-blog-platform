@@ -9,7 +9,8 @@
   ],
   "scripts": {
     "build": "yarn workspace infra build && yarn workspace api build",
-    "deploy": "yarn workspace infra deploy"
+    "deploy": "yarn workspace infra deploy",
+    "web": "yarn workspace front-end dev"
   },
   "author": "kovacsbendeguz <kovacsbendeguz00@gmail.com>",
   "license": "MIT"

@@ -1,12 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
-import { getArticles } from '../api/articles';
+import { getEngagementStats } from '../api/articles';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 export const Analytics = () => {
   const { t } = useTranslation();
-  const { data: articles, isLoading, error } = useQuery({
-    queryKey: ['articles'],
-    queryFn: getArticles,
+  const { data: stats, isLoading, error } = useQuery({
+    queryKey: ['engagementStats'],
+    queryFn: getEngagementStats,
   });
 
   if (isLoading) {
@@ -17,69 +18,92 @@ export const Analytics = () => {
     return <div className="error">Error loading analytics: {error instanceof Error ? error.message : 'Unknown error'}</div>;
   }
 
-  const totalArticles = articles?.length || 0;
-
-  const authorCounts: Record<string, number> = {};
-  articles?.forEach((article) => {
-    authorCounts[article.author] = (authorCounts[article.author] || 0) + 1;
-  });
-
-  const topAuthors = Object.entries(authorCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
-
-  const last7Days = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() - i);
-    return date.toISOString().split('T')[0]; // YYYY-MM-DD
-  }).reverse();
-
-  const articlesPerDay: Record<string, number> = {};
-  last7Days.forEach((day) => {
-    articlesPerDay[day] = 0;
-  });
-
-  articles?.forEach((article) => {
-    const day = article.publishedAt.split('T')[0];
-    if (last7Days.includes(day)) {
-      articlesPerDay[day] = (articlesPerDay[day] || 0) + 1;
-    }
-  });
+  if (!stats) {
+    return <div className="error">No analytics data available</div>;
+  }
 
   return (
-    <div>
+    <div className="analytics-page">
       <h2>{t('analytics.title')}</h2>
+      
+      <div className="analytics-summary">
+        <div className="summary-card">
+          <h3>{t('analytics.totalArticles')}</h3>
+          <div className="summary-value">{stats.totalArticles}</div>
+        </div>
+        
+        <div className="summary-card">
+          <h3>{t('analytics.averageViews')}</h3>
+          <div className="summary-value">{stats.averageMetrics.views.toFixed(1)}</div>
+        </div>
+        
+        <div className="summary-card">
+          <h3>{t('analytics.averageTimeSpent')}</h3>
+          <div className="summary-value">{stats.averageMetrics.timeSpent.toFixed(0)} {t('detail.metrics.seconds')}</div>
+        </div>
+        
+        <div className="summary-card">
+          <h3>{t('analytics.averageRating')}</h3>
+          <div className="summary-value">⭐ {stats.averageMetrics.rating.toFixed(1)}</div>
+        </div>
+      </div>
       
       <div className="analytics-grid">
         <div className="analytics-card">
-          <h3>{t('analytics.totalArticles')}</h3>
-          <div className="analytics-value">{totalArticles}</div>
+          <h3>{t('analytics.topArticlesByViews')}</h3>
+          <ul className="analytics-list">
+            {stats.topArticlesByViews.map(article => (
+              <li key={article.articleId} className="analytics-list-item">
+                <Link to={`/articles/${article.articleId}`}>{article.title}</Link>
+                <div className="list-item-meta">
+                  <span>{article.author}</span>
+                  <span className="list-item-value">👁️ {article.views}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+        
+        <div className="analytics-card">
+          <h3>{t('analytics.topArticlesByEngagement')}</h3>
+          <ul className="analytics-list">
+            {stats.topArticlesByTimeSpent.map(article => (
+              <li key={article.articleId} className="analytics-list-item">
+                <Link to={`/articles/${article.articleId}`}>{article.title}</Link>
+                <div className="list-item-meta">
+                  <span>{article.author}</span>
+                  <span className="list-item-value">⏱️ {article.timeSpent} {t('detail.metrics.seconds')}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+        
+        <div className="analytics-card">
+          <h3>{t('analytics.topArticlesByRating')}</h3>
+          <ul className="analytics-list">
+            {stats.topArticlesByRating.map(article => (
+              <li key={article.articleId} className="analytics-list-item">
+                <Link to={`/articles/${article.articleId}`}>{article.title}</Link>
+                <div className="list-item-meta">
+                  <span>{article.author}</span>
+                  <span className="list-item-value">⭐ {article.rating.toFixed(1)}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
         
         <div className="analytics-card">
           <h3>{t('analytics.topAuthors')}</h3>
-          {topAuthors.length > 0 ? (
-            <ul>
-              {topAuthors.map(([author, count]) => (
-                <li key={author}>
-                  {author}: {count} {count !== 1 ? t('admin.articles').toLowerCase() : t('admin.articles').toLowerCase().slice(0, -1)}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>{t('analytics.noData')}</p>
-          )}
-        </div>
-        
-        <div className="analytics-card">
-          <h3>{t('analytics.recentActivity')}</h3>
-          {Object.entries(articlesPerDay).map(([day, count]) => (
-            <div key={day} className="activity-day">
-              <span>{new Date(day).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</span>
-              <div className="activity-bar" style={{ width: `${Math.min(count * 20, 100)}%` }}></div>
-              <span>{count}</span>
-            </div>
-          ))}
+          <ul className="analytics-list">
+            {stats.topAuthors.map(author => (
+              <li key={author.author} className="analytics-list-item">
+                <span className="author-name">{author.author}</span>
+                <span className="list-item-value">{author.articleCount} {t('admin.articles')}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </div>

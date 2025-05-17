@@ -18,7 +18,7 @@ const headers = {
 };
 
 interface RssItem {
-  title: string;
+  title?: string;
   content?: string;
   contentSnippet?: string;
   creator?: string;
@@ -48,14 +48,25 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     console.log(`Found ${feed.items.length} items in feed`);
     
     const importPromises = feed.items.map(async (item: RssItem) => {
+      const articleId = uuid();
+      const now = new Date().toISOString();
+      const pubDate = item.isoDate || now;
+      
       const article = {
-        articleId: uuid(),
-        title: item.title,
+        PK: 'ARTICLE',
+        articleId,
+        publishedAt: pubDate,
+        title: item.title || 'Untitled',
         content: item.content || item.contentSnippet || '',
         author: item.creator || 'RSS Import',
-        publishedAt: item.isoDate || new Date().toISOString(),
+        createdAt: now,
         sourceUrl: item.link || '',
-        importedAt: new Date().toISOString(),
+        importedAt: now,
+        metrics: {
+          views: 0,
+          timeSpent: 0,
+          rating: 0
+        }
       };
       
       const dbItem = marshall(article, { removeUndefinedValues: true });
@@ -64,15 +75,12 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         await dynamoDb.send(
           new PutItemCommand({
             TableName: TABLE,
-            Item: dbItem,
-            ConditionExpression: 'attribute_not_exists(articleId)'
+            Item: dbItem
           })
         );
-        return article.articleId;
+        return articleId;
       } catch (err) {
-        if (err instanceof Error && err.name === 'ConditionalCheckFailedException') {
-          return article.articleId;
-        }
+        console.error('Error importing item:', err);
         throw err;
       }
     });

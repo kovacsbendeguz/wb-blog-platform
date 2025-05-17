@@ -28,53 +28,66 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     }
 
     if (!event.body) {
-      return { 
-        statusCode: 400, 
+      return {
+        statusCode: 400,
         headers,
-        body: JSON.stringify({ message: 'Request body is required' }) 
+        body: JSON.stringify({ message: 'Request body is required' })
       };
     }
 
     const data = JSON.parse(event.body);
     
+    // Validate required fields
     if (!data.title || !data.content || !data.author) {
-      return { 
-        statusCode: 400, 
+      return {
+        statusCode: 400,
         headers,
-        body: JSON.stringify({ 
-          message: 'Missing required fields', 
-          required: ['title', 'content', 'author'] 
-        }) 
+        body: JSON.stringify({
+          message: 'Missing required fields',
+          required: ['title', 'content', 'author']
+        })
       };
     }
 
-    const item = { 
-      articleId: uuid(), 
-      ...data, 
-      publishedAt: new Date().toISOString() 
+    const articleId = uuid();
+    const now = new Date().toISOString();
+    
+    const item = {
+      PK: 'ARTICLE',
+      articleId,
+      publishedAt: now,
+      title: data.title,
+      content: data.content,
+      author: data.author,
+      createdAt: now,
+      metrics: {
+        views: 0,
+        timeSpent: 0,
+        rating: 0
+      }
     };
     
     const dbItem = marshall(item, { removeUndefinedValues: true });
     
-    await dbClient.send(new PutItemCommand({ 
-      TableName: TABLE, 
-      Item: dbItem 
+    await dbClient.send(new PutItemCommand({
+      TableName: TABLE,
+      Item: dbItem
     }));
     
-    return { 
-      statusCode: 201, 
+    return {
+      statusCode: 201,
       headers,
-      body: JSON.stringify(item) 
+      body: JSON.stringify(item)
     };
   } catch (err) {
     console.error('postArticle error:', err);
-    return { 
-      statusCode: 500, 
+    return {
+      statusCode: 500,
       headers,
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         message: 'Internal Server Error',
         error: err instanceof Error ? err.message : 'Unknown error'
-      }) 
+      })
     };
   }
 };

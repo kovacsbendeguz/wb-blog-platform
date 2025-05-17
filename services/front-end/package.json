@@ -8,6 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@aws-sdk/lib-dynamodb": "^3.812.0",
     "@tanstack/react-query": "^5.24.1",
     "i18next": "^23.10.0",
     "i18next-browser-languagedetector": "^7.2.0",

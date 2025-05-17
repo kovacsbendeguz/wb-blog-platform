@@ -1,5 +1,5 @@
 import { APIGatewayProxyHandler } from 'aws-lambda';
-import { ScanCommand } from '@aws-sdk/client-dynamodb';
+import { QueryCommand, GetItemCommand } from '@aws-sdk/client-dynamodb';
 import { dbClient } from '../lib/dbClient';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
 
@@ -14,12 +14,19 @@ const headers = {
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
     if (event.pathParameters && event.pathParameters.id) {
-      const result = await dbClient.send(new ScanCommand({ TableName: TABLE }));
-      const items = result.Items || [];
-      const foundItem = items.find(item => 
-        item.articleId && item.articleId.S === event.pathParameters!.id);
+      const articleId = event.pathParameters.id;
       
-      if (!foundItem) {
+      const result = await dbClient.send(new QueryCommand({
+        TableName: TABLE,
+        IndexName: 'ArticleIdIndex',
+        KeyConditionExpression: 'articleId = :articleId',
+        ExpressionAttributeValues: {
+          ':articleId': { S: articleId }
+        },
+        Limit: 1
+      }));
+
+      if (!result.Items || result.Items.length === 0) {
         return { 
           statusCode: 404, 
           headers,
@@ -27,23 +34,51 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         };
       }
       
-      const unmarshalled = unmarshall(foundItem);
+      const article = unmarshall(result.Items[0]);
+      
+      // if (!article.metrics) {
+      //   article.metrics = { views: 1, timeSpent: 0, rating: 0 };
+      // } else {
+      //   article.metrics.views = (article.metrics.views || 0) + 1;
+      // }
       
       return { 
         statusCode: 200, 
         headers,
-        body: JSON.stringify(unmarshalled) 
+        body: JSON.stringify(article) 
       };
     }
     
-    const result = await dbClient.send(new ScanCommand({ TableName: TABLE }));
+    const limit = event.queryStringParameters?.limit ? 
+      parseInt(event.queryStringParameters.limit) : 10;
+    const lastEvaluatedKey = event.queryStringParameters?.nextToken ? 
+      JSON.parse(decodeURIComponent(event.queryStringParameters.nextToken)) : undefined;
     
-    const unmarshalled = (result.Items || []).map(item => unmarshall(item));
+    const queryParams = {
+      TableName: TABLE,
+      KeyConditionExpression: 'PK = :pk',
+      ExpressionAttributeValues: {
+        ':pk': { S: 'ARTICLE' }
+      },
+      ScanIndexForward: false,
+      Limit: limit,
+      ExclusiveStartKey: lastEvaluatedKey
+    };
+    
+    const result = await dbClient.send(new QueryCommand(queryParams));
+    
+    const articles = (result.Items || []).map(item => unmarshall(item));
+    
+    const response = {
+      articles,
+      nextToken: result.LastEvaluatedKey ? 
+        encodeURIComponent(JSON.stringify(result.LastEvaluatedKey)) : null
+    };
     
     return { 
       statusCode: 200, 
       headers,
-      body: JSON.stringify(unmarshalled) 
+      body: JSON.stringify(response) 
     };
   } catch (error) {
     console.error('Error in getArticles:', error);

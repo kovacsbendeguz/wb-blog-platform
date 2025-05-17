@@ -1,18 +1,25 @@
-import { Article, CreateArticlePayload } from "../types";
+import { Article, CreateArticlePayload, ArticleMetrics } from "../types";
 
 const API_URL =
-  "https://og1xa3rd04.execute-api.eu-central-1.amazonaws.com/prod";
+  "https://b5w4i622r3.execute-api.eu-central-1.amazonaws.com/prod";
 
-export const getArticles = async (): Promise<Article[]> => {
+export const getArticles = async (limit: number = 10, nextToken?: string): Promise<{
+  articles: Article[];
+  nextToken: string | null;
+}> => {
   try {
-    const response = await fetch(`${API_URL}/articles`);
+    let url = `${API_URL}/articles?limit=${limit}`;
+    if (nextToken) {
+      url += `&nextToken=${nextToken}`;
+    }
+
+    const response = await fetch(url);
 
     if (!response.ok) {
       throw new Error(`Failed to fetch articles: ${response.statusText}`);
     }
 
-    const data = await response.json();
-    return data;
+    return await response.json();
   } catch (error) {
     console.error("Error fetching articles:", error);
     throw error;
@@ -53,6 +60,60 @@ export const getArticle = async (id: string): Promise<Article> => {
     return response.json();
   } catch (error) {
     console.error(`Error fetching article ${id}:`, error);
+    throw error;
+  }
+};
+
+export const updateArticleMetrics = async (
+  id: string,
+  metrics: {
+    incrementView?: boolean;
+    timeSpent?: number;
+    rating?: number;
+  }
+): Promise<{ message: string; metrics: ArticleMetrics }> => {
+  try {
+    console.log(`Updating metrics for article ${id}:`, metrics);
+    
+    const response = await fetch(`${API_URL}/articles/${id}/metrics`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(metrics),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Failed to update metrics: Status ${response.status}, Response:`, errorText);
+      throw new Error(`Failed to update metrics: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`Error updating metrics for article ${id}:`, error);
+    throw error;
+  }
+};
+
+export const getEngagementStats = async (): Promise<{
+  totalArticles: number;
+  topArticlesByViews: Array<{ articleId: string; title: string; author: string; views: number }>;
+  topArticlesByTimeSpent: Array<{ articleId: string; title: string; author: string; timeSpent: number }>;
+  topArticlesByRating: Array<{ articleId: string; title: string; author: string; rating: number }>;
+  averageMetrics: { views: number; timeSpent: number; rating: number };
+  topAuthors: Array<{ author: string; articleCount: number }>;
+}> => {
+  try {
+    const response = await fetch(`${API_URL}/analytics/engagement`);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch engagement stats: ${response.statusText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error("Error fetching engagement stats:", error);
     throw error;
   }
 };

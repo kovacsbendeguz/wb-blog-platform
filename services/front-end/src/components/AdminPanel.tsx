@@ -1,14 +1,26 @@
 import { useQuery } from '@tanstack/react-query';
-import { getArticles, triggerIngest } from '../api/articles';
+import { getArticles, getEngagementStats, triggerIngest } from '../api/articles';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export const AdminPanel = () => {
   const { t } = useTranslation();
   const [ingestStatus, setIngestStatus] = useState<string | null>(null);
-  const { data: articles, isLoading, error, refetch } = useQuery({
-    queryKey: ['articles'],
-    queryFn: getArticles,
+  const [refreshKey, setRefreshKey] = useState(0);
+  
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['articlesAdmin', refreshKey],
+    queryFn: async () => {
+      const response = await getArticles(100);
+      return response;
+    },
+    staleTime: 30 * 1000,
+  });
+
+  const { data: statsData, isLoading: statsLoading } = useQuery({
+    queryKey: ['engagementStats', refreshKey],
+    queryFn: getEngagementStats,
+    staleTime: 30 * 1000,
   });
 
   const handleTriggerIngest = async () => {
@@ -16,29 +28,43 @@ export const AdminPanel = () => {
       setIngestStatus('Loading...');
       const result = await triggerIngest();
       setIngestStatus(`Success! Imported ${result.articleIds.length} articles.`);
-      refetch();
+      setRefreshKey(k => k + 1);
     } catch (error) {
       setIngestStatus(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
-  if (isLoading) return <div className="loading">{t('admin.loading')}</div>;
+  const handleRefreshData = () => {
+    setRefreshKey(k => k + 1);
+  };
+
+  if (isLoading || statsLoading) return <div className="loading">{t('admin.loading')}</div>;
   if (error) return <div className="error">Error loading data: {error instanceof Error ? error.message : 'Unknown error'}</div>;
 
-  const totalArticles = articles?.length || 0;
-  const totalAuthors = new Set(articles?.map(a => a.author)).size;
-  const averageContentLength = (articles ?? []).reduce((acc, article) => 
+  const articles = data?.articles || [];
+  
+  const totalArticles = articles.length || 0;
+  const totalAuthors = new Set(articles.map(a => a.author)).size;
+  const averageContentLength = articles.reduce((acc, article) => 
     acc + (typeof article.content === 'string' ? article.content.length : 0), 0) / (totalArticles || 1);
   
-  const authorCounts = articles?.reduce((acc, article) => {
+  const authorCounts = articles.reduce((acc, article) => {
     const author = article.author;
     acc[author] = (acc[author] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
   
-  const topAuthors = Object.entries(authorCounts || {})
+  const topAuthors = Object.entries(authorCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
+
+  const sortedArticlesByViews = [...articles]
+    .sort((a, b) => {
+      const aViews = a.metrics?.views || 0;
+      const bViews = b.metrics?.views || 0;
+      return bViews - aViews;
+    })
+    .slice(0, 10);
 
   return (
     <div className="admin-panel">
@@ -90,11 +116,66 @@ export const AdminPanel = () => {
           <button onClick={handleTriggerIngest} className="primary-button">
             {t('admin.triggerRssImport')}
           </button>
-          <button onClick={() => refetch()} className="secondary-button">
+          <button onClick={handleRefreshData} className="secondary-button">
             {t('admin.refreshData')}
           </button>
         </div>
         {ingestStatus && <div className="status-message">{ingestStatus}</div>}
+      </div>
+      
+      {statsData && (
+        <div className="admin-card engagement-stats">
+          <h3>{t('admin.engagementOverview')}</h3>
+          <div className="stat-grid">
+            <div className="stat">
+              <div className="stat-value">{statsData.averageMetrics.views.toFixed(1)}</div>
+              <div className="stat-label">{t('analytics.averageViews')}</div>
+            </div>
+            <div className="stat">
+              <div className="stat-value">{statsData.averageMetrics.timeSpent.toFixed(0)}</div>
+              <div className="stat-label">{t('analytics.averageTimeSpent')} ({t('detail.metrics.seconds')})</div>
+            </div>
+            <div className="stat">
+              <div className="stat-value">{statsData.averageMetrics.rating.toFixed(1)}</div>
+              <div className="stat-label">{t('analytics.averageRating')}</div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <div className="admin-card">
+        <h3>{t('admin.mostViewedArticles')}</h3>
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th>{t('admin.article')}</th>
+              <th>{t('admin.author')}</th>
+              <th>{t('detail.metrics.views')}</th>
+              <th>{t('detail.metrics.timeSpent')}</th>
+              <th>{t('detail.metrics.rating')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sortedArticlesByViews.map(article => (
+              <tr key={article.articleId}>
+                <td>
+                  <a href={`/articles/${article.articleId}`} target="_blank" rel="noopener noreferrer">
+                    {article.title}
+                  </a>
+                </td>
+                <td>{article.author}</td>
+                <td>{article.metrics?.views || 0}</td>
+                <td>{article.metrics?.timeSpent || 0}s</td>
+                <td>{article.metrics?.rating ? article.metrics.rating.toFixed(1) : '0.0'}</td>
+              </tr>
+            ))}
+            {sortedArticlesByViews.length === 0 && (
+              <tr>
+                <td colSpan={5} className="empty-table-message">No article metrics available yet</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

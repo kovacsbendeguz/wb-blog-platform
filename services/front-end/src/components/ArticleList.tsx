@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getArticles } from '../api/articles';
 import { Article } from '../types';
@@ -6,10 +7,37 @@ import { useTranslation } from 'react-i18next';
 
 export const ArticleList = () => {
   const { t, i18n } = useTranslation();
-  const { data: articles, isLoading, error } = useQuery({
-    queryKey: ['articles'],
-    queryFn: getArticles,
+  const [currentPage, setCurrentPage] = useState(1);
+  const [paginationHistory, setPaginationHistory] = useState<{ page: number, nextToken: string | null }[]>([
+    { page: 1, nextToken: null }
+  ]);
+  
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['articles', paginationHistory[currentPage - 1]?.nextToken],
+    queryFn: () => getArticles(10, paginationHistory[currentPage - 1]?.nextToken),
+    keepPreviousData: true,
   });
+
+  useEffect(() => {
+    if (data && currentPage === paginationHistory.length) {
+      setPaginationHistory(prev => [
+        ...prev.slice(0, currentPage),
+        { page: currentPage + 1, nextToken: data.nextToken }
+      ]);
+    }
+  }, [data, currentPage]);
+
+  const loadNextPage = () => {
+    if (data?.nextToken) {
+      setCurrentPage(prev => prev + 1);
+    }
+  };
+
+  const loadPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(prev => prev - 1);
+    }
+  };
 
   if (isLoading) {
     return <div className="loading">{t('articles.loading')}</div>;
@@ -19,13 +47,9 @@ export const ArticleList = () => {
     return <div className="error">Error loading articles: {error instanceof Error ? error.message : 'Unknown error'}</div>;
   }
 
-  if (!articles || articles.length === 0) {
+  if (!data?.articles || data.articles.length === 0) {
     return <div>{t('articles.empty')}</div>;
   }
-
-  const sortedArticles = [...articles].sort(
-    (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-  );
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -39,22 +63,46 @@ export const ArticleList = () => {
   return (
     <div>
       <h2>{t('articles.title')}</h2>
-      {sortedArticles.map((article: Article) => (
-        <div key={article.articleId} className="article-card">
-          <h3>{article.title}</h3>
-          <p>
-            <strong>{t('articles.by')} {article.author}</strong> | {formatDate(article.publishedAt)}
-          </p>
-          <p>
-            {typeof article.content === 'string' 
-              ? article.content.length > 150 
-                ? `${article.content.substring(0, 150)}...` 
-                : article.content
-              : 'No content available'}
-          </p>
-          <Link to={`/articles/${article.articleId}`}>{t('articles.readMore')}</Link>
-        </div>
-      ))}
+      <div className="articles-grid">
+        {data.articles.map((article: Article) => (
+          <div key={article.articleId} className="article-card">
+            <h3>{article.title}</h3>
+            <p className="article-meta">
+              <strong>{t('articles.by')} {article.author}</strong> | <span className="article-date">{formatDate(article.publishedAt)}</span>
+            </p>
+            <p className="article-excerpt">
+              {typeof article.content === 'string' 
+                ? article.content.length > 150 
+                  ? `${article.content.substring(0, 150)}...` 
+                  : article.content
+                : 'No content available'}
+            </p>
+            <div className="article-preview-metrics">
+              <span title={t('detail.metrics.views')}>👁️ {article.metrics?.views || 0}</span>
+              <span title={t('detail.metrics.rating')}>⭐ {article.metrics?.rating ? article.metrics.rating.toFixed(1) : '0.0'}</span>
+            </div>
+            <Link to={`/articles/${article.articleId}`} className="read-more-link">{t('articles.readMore')}</Link>
+          </div>
+        ))}
+      </div>
+      
+      <div className="pagination-controls">
+        <button 
+          onClick={loadPreviousPage} 
+          disabled={currentPage <= 1}
+          className="pagination-button"
+        >
+          {t('articles.previousPage')}
+        </button>
+        <span className="page-indicator">Page {currentPage}</span>
+        <button 
+          onClick={loadNextPage} 
+          disabled={!data.nextToken}
+          className="pagination-button"
+        >
+          {t('articles.nextPage')}
+        </button>
+      </div>
     </div>
   );
 };
