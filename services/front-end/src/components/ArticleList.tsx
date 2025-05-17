@@ -14,8 +14,7 @@ export const ArticleList = () => {
   
   const { data, isLoading, error } = useQuery({
     queryKey: ['articles', paginationHistory[currentPage - 1]?.nextToken],
-    queryFn: () => getArticles(10, paginationHistory[currentPage - 1]?.nextToken),
-    keepPreviousData: true,
+    queryFn: () => getArticles(10, paginationHistory[currentPage - 1]?.nextToken ?? undefined),
   });
 
   useEffect(() => {

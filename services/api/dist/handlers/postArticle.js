@@ -13,7 +13,6 @@ const headers = {
 };
 const handler = async (event) => {
     try {
-        // Handle preflight request
         if (event.httpMethod === 'OPTIONS') {
             return {
                 statusCode: 200,
@@ -61,7 +60,6 @@ const handler = async (event) => {
                 rating: 0
             }
         };
-        // Convert plain JS object to DynamoDB attribute values
         const dbItem = (0, util_dynamodb_1.marshall)(item, { removeUndefinedValues: true });
         await dbClient_1.dbClient.send(new client_dynamodb_1.PutItemCommand({
             TableName: TABLE,

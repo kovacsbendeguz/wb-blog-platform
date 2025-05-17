@@ -10,7 +10,6 @@ const BUCKET = process.env.EXPORT_BUCKET;
 const s3 = new client_s3_1.S3Client({});
 const handler = async () => {
     try {
-        // Query all articles
         const data = await dbClient_1.dbClient.send(new client_dynamodb_1.QueryCommand({
             TableName: TABLE,
             KeyConditionExpression: 'PK = :pk',
