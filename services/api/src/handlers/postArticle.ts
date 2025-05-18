@@ -1,3 +1,4 @@
+// services/api/src/handlers/postArticle.ts
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import { PutItemCommand } from '@aws-sdk/client-dynamodb';
 import { marshall } from '@aws-sdk/util-dynamodb';
@@ -13,6 +14,9 @@ const headers = {
 };
 
 export const handler: APIGatewayProxyHandler = async (event) => {
+  // Debug logging
+  console.log('Event received:', JSON.stringify(event, null, 2));
+  
   try {
     if (event.httpMethod === 'OPTIONS') {
       return {
@@ -33,6 +37,24 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         headers,
         body: JSON.stringify({ message: 'Request body is required' })
       };
+    }
+
+    // Debug auth
+    console.log('Auth context:', event.requestContext.authorizer);
+    console.log('Headers:', event.headers);
+
+    // Check if we're authenticated through Cognito
+    let username = 'Unknown User';
+    let userSub = null;
+    
+    // Extract user from Cognito authorizer context if available
+    if (event.requestContext?.authorizer?.claims) {
+      const claims = event.requestContext.authorizer.claims;
+      username = claims['cognito:username'] || claims.username || username;
+      userSub = claims.sub;
+      console.log('Authenticated user:', username, 'with sub:', userSub);
+    } else {
+      console.log('No Cognito claims found in authorizer context');
     }
 
     const data = JSON.parse(event.body);
@@ -60,12 +82,16 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       content: data.content,
       author: data.author,
       createdAt: now,
+      createdBy: username,
+      ...(userSub && { userSub }),
       metrics: {
         views: 0,
         timeSpent: 0,
         rating: 0
       }
     };
+    
+    console.log('Creating article item:', JSON.stringify(item, null, 2));
     
     const dbItem = marshall(item, { removeUndefinedValues: true });
     

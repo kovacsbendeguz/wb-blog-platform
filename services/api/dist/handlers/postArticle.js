@@ -12,6 +12,8 @@ const headers = {
     'Content-Type': 'application/json'
 };
 const handler = async (event) => {
+    // Debug logging
+    console.log('Event received:', JSON.stringify(event, null, 2));
     try {
         if (event.httpMethod === 'OPTIONS') {
             return {
@@ -31,6 +33,22 @@ const handler = async (event) => {
                 headers,
                 body: JSON.stringify({ message: 'Request body is required' })
             };
+        }
+        // Debug auth
+        console.log('Auth context:', event.requestContext.authorizer);
+        console.log('Headers:', event.headers);
+        // Check if we're authenticated through Cognito
+        let username = 'Unknown User';
+        let userSub = null;
+        // Extract user from Cognito authorizer context if available
+        if (event.requestContext?.authorizer?.claims) {
+            const claims = event.requestContext.authorizer.claims;
+            username = claims['cognito:username'] || claims.username || username;
+            userSub = claims.sub;
+            console.log('Authenticated user:', username, 'with sub:', userSub);
+        }
+        else {
+            console.log('No Cognito claims found in authorizer context');
         }
         const data = JSON.parse(event.body);
         // Validate required fields
@@ -54,12 +72,15 @@ const handler = async (event) => {
             content: data.content,
             author: data.author,
             createdAt: now,
+            createdBy: username,
+            ...(userSub && { userSub }),
             metrics: {
                 views: 0,
                 timeSpent: 0,
                 rating: 0
             }
         };
+        console.log('Creating article item:', JSON.stringify(item, null, 2));
         const dbItem = (0, util_dynamodb_1.marshall)(item, { removeUndefinedValues: true });
         await dbClient_1.dbClient.send(new client_dynamodb_1.PutItemCommand({
             TableName: TABLE,
