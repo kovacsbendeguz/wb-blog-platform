@@ -756,3 +756,254 @@ body.rtl .activity-day span:last-child {
     gap: 0.5rem;
   }
 }
+
+/* Authentication Styles */
+.auth-form-container {
+  max-width: 500px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.auth-button {
+  background-color: #1976d2;
+  color: white;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.auth-button:hover {
+  background-color: #1565c0;
+}
+
+.auth-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.auth-links {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+}
+
+.auth-link {
+  color: #1976d2;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+}
+
+.auth-footer {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.field-error {
+  color: #d32f2f;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+.success-message {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.auth-message {
+  text-align: center;
+  margin: 2rem 0;
+}
+
+.auth-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.auth-dropdown-button {
+  background-color: transparent;
+  color: #1976d2;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.auth-dropdown-button:after {
+  content: "▼";
+  font-size: 0.7em;
+  margin-left: 0.5rem;
+}
+
+.auth-dropdown-content {
+  display: none;
+  position: absolute;
+  right: 0;
+  background-color: white;
+  min-width: 160px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.auth-dropdown:hover .auth-dropdown-content {
+  display: block;
+}
+
+.auth-dropdown-content a,
+.auth-dropdown-content button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  text-decoration: none;
+  color: #333;
+  background-color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.auth-dropdown-content a:hover,
+.auth-dropdown-content button:hover {
+  background-color: #f5f5f5;
+}
+
+.dropdown-logout {
+  color: #d32f2f !important;
+  border-top: 1px solid #eee;
+}
+
+.signin-button {
+  background-color: #1976d2;
+  color: white !important;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.signin-button:hover {
+  background-color: #1565c0;
+  color: white;
+}
+
+/* Profile Page Styles */
+/* Profile Page Styles */
+.profile-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1rem 0;
+}
+
+.profile-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.profile-info {
+  display: grid;
+  gap: 1rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.info-item strong {
+  color: #555;
+}
+
+.password-form {
+  margin-top: 1rem;
+}
+
+.logout-button {
+  background-color: white;
+  color: #d32f2f;
+  border: 1px solid #d32f2f;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.logout-button:hover {
+  background-color: #ffebee;
+}
+
+/* Unauthorized Page */
+.unauthorized-container {
+  text-align: center;
+  margin: 4rem auto;
+  max-width: 600px;
+}
+
+.unauthorized-container h2 {
+  font-size: 2rem;
+  color: #d32f2f;
+}
+
+.unauthorized-container p {
+  margin: 1.5rem 0;
+  font-size: 1.1rem;
+}
+
+/* RTL Support for Auth Pages */
+[dir="rtl"] .auth-links {
+  justify-content: flex-start;
+}
+
+[dir="rtl"] .auth-dropdown-content {
+  left: 0;
+  right: auto;
+}
+
+[dir="rtl"] .auth-dropdown-button:after {
+  margin-right: 0.5rem;
+  margin-left: 0;
+}
+
+/* Responsive Auth Styles */
+@media (max-width: 600px) {
+  .auth-form-container {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+  
+  .profile-container {
+    padding: 1rem;
+  }
+}

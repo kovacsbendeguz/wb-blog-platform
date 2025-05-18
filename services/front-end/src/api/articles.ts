@@ -1,7 +1,8 @@
+// services/front-end/src/api/articles.ts
 import { Article, CreateArticlePayload, ArticleMetrics } from "../types";
+import { AuthService } from "../auth/service";
 
-const API_URL =
-  "https://b5w4i622r3.execute-api.eu-central-1.amazonaws.com/prod";
+const API_URL = "https://b5w4i622r3.execute-api.eu-central-1.amazonaws.com/prod";
 
 export const getArticles = async (limit: number = 10, nextToken?: string): Promise<{
   articles: Article[];
@@ -30,15 +31,23 @@ export const createArticle = async (
   article: CreateArticlePayload
 ): Promise<Article> => {
   try {
+    const headers = AuthService.getAuthHeaders();
+    
+    console.log('Creating article with headers:', headers);
+    
     const response = await fetch(`${API_URL}/articles`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers,
       body: JSON.stringify(article),
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Failed to create article: Status ${response.status}, Response:`, errorText);
+      
+      if (response.status === 401) {
+        throw new Error('You must be logged in to create an article');
+      }
       throw new Error(`Failed to create article: ${response.statusText}`);
     }
 
@@ -105,9 +114,16 @@ export const getEngagementStats = async (): Promise<{
   topAuthors: Array<{ author: string; articleCount: number }>;
 }> => {
   try {
-    const response = await fetch(`${API_URL}/analytics/engagement`);
+    const headers = AuthService.getAuthHeaders();
+    
+    const response = await fetch(`${API_URL}/analytics/engagement`, {
+      headers
+    });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('You must be logged in to view analytics');
+      }
       throw new Error(`Failed to fetch engagement stats: ${response.statusText}`);
     }
 
@@ -123,11 +139,17 @@ export const triggerIngest = async (): Promise<{
   articleIds: string[];
 }> => {
   try {
+    const headers = AuthService.getAuthHeaders();
+    
     const response = await fetch(`${API_URL}/ingest`, {
       method: "POST",
+      headers
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('You must be logged in to trigger ingestion');
+      }
       throw new Error(`Failed to trigger ingestion: ${response.statusText}`);
     }
 
