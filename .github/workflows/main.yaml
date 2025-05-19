@@ -2,11 +2,9 @@ name: CI/CD (Build, Test & Infra Deploy)
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
 
 permissions:
   id-token: write
@@ -14,7 +12,6 @@ permissions:
 
 jobs:
   build-test-deploy:
-    name: Build, Test & Deploy Infra
     runs-on: ubuntu-latest
 
     steps:
@@ -35,12 +32,12 @@ jobs:
           yarn workspace api test
           yarn workspace infra test
           yarn workspace ingest test
+          yarn workspace front-end test
 
       - name: Build services & infra
         run: |
           yarn workspace api build
           yarn workspace ingest build
-          yarn workspace front-end build
           cd infra && yarn build
 
       - name: Configure AWS credentials
@@ -55,3 +52,28 @@ jobs:
         run: |
           cd infra
           npx cdk deploy --all --require-approval never
+
+      - name: Extract API endpoint
+        if: github.event_name == 'push'
+        id: get_api
+        run: |
+          API_URL=$(aws cloudformation describe-stacks \
+            --stack-name ApiStack \
+            --query "Stacks[0].Outputs[?OutputKey=='ApiEndpoint'].OutputValue" \
+            --output text)
+          echo "API_URL=${API_URL}" >> $GITHUB_ENV
+
+      - name: Update Amplify env var
+        if: github.event_name == 'push'
+        run: |
+          aws amplify update-app \
+            --app-id ${{ secrets.AMPLIFY_APP_ID }} \
+            --environment-variables REACT_APP_API_URL=${{ env.API_URL }}
+
+      - name: Trigger Amplify front-end deploy
+        if: github.event_name == 'push'
+        run: |
+          aws amplify start-job \
+            --app-id ${{ secrets.AMPLIFY_APP_ID }} \
+            --branch-name main \
+            --job-type RELEASE
