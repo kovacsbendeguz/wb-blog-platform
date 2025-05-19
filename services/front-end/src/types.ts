@@ -34,3 +34,27 @@ export interface EngagementStats {
   averageMetrics: { views: number; timeSpent: number; rating: number };
   topAuthors: Array<{ author: string; articleCount: number }>;
 }
+
+export interface User {
+  username: string;
+  attributes: {
+    sub: string;
+    email: string;
+    name?: string;
+    'custom:role'?: string;
+    [key: string]: string | undefined;
+  };
+}
+
+export interface AuthState {
+  isAuthenticated: boolean;
+  user: User | null;
+  isLoading: boolean;
+  error: string | null;
+  tokens: {
+    accessToken: string | null;
+    idToken: string | null;
+    refreshToken: string | null;
+    expiresAt: number | null;
+  };
+}

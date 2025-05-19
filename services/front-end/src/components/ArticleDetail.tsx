@@ -3,10 +3,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { getArticle, updateArticleMetrics } from '../api/articles';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../context/AuthCt';
 
 export const ArticleDetail = () => {
   const { t, i18n } = useTranslation();
   const { id } = useParams<{ id: string }>();
+  const { tokens, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
   const startTimeRef = useRef<number>(Date.now());
   const viewTrackedRef = useRef<boolean>(false);
@@ -21,7 +23,7 @@ export const ArticleDetail = () => {
 
   const updateMetricsMutation = useMutation({
     mutationFn: (metrics: { incrementView?: boolean; timeSpent?: number; rating?: number }) => 
-      updateArticleMetrics(id!, metrics),
+      updateArticleMetrics(id!, metrics, tokens.accessToken || undefined),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['article', id] });
     },
@@ -49,22 +51,28 @@ export const ArticleDetail = () => {
   }, [id]);
 
   const handleRating = (rating: number) => {
-    if (id) {
-      setUserRating(rating);
-      updateMetricsMutation.mutate(
-        { rating },
-        {
-          onSuccess: () => {
-            setShowRatingSuccess(true);
-            setTimeout(() => setShowRatingSuccess(false), 3000);
-          },
-          onError: (error) => {
-            console.error("Error submitting rating:", error);
-            alert("Sorry, there was an error submitting your rating. Please try again later.");
-          }
-        }
-      );
+    if (!id) return;
+    
+    // Only allow authenticated users to rate articles
+    if (!isAuthenticated) {
+      alert(t('auth.loginToRate'));
+      return;
     }
+    
+    setUserRating(rating);
+    updateMetricsMutation.mutate(
+      { rating },
+      {
+        onSuccess: () => {
+          setShowRatingSuccess(true);
+          setTimeout(() => setShowRatingSuccess(false), 3000);
+        },
+        onError: (error) => {
+          console.error("Error submitting rating:", error);
+          alert("Sorry, there was an error submitting your rating. Please try again later.");
+        }
+      }
+    );
   };
 
   if (isLoading) {
@@ -137,13 +145,16 @@ export const ArticleDetail = () => {
           
           <div className="rating-container">
             <h5>{t('detail.rateArticle')}</h5>
+            {!isAuthenticated && (
+              <p className="rating-login-message">{t('auth.loginToRate')}</p>
+            )}
             <div className="star-rating">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
                   onClick={() => handleRating(star)}
                   className={`star-button ${userRating && star <= userRating ? 'active' : ''}`}
-                  disabled={updateMetricsMutation.isPending}
+                  disabled={updateMetricsMutation.isPending || !isAuthenticated}
                   aria-label={`Rate ${star} stars`}
                 >
                   ⭐

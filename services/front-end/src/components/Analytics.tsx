@@ -2,13 +2,26 @@ import { useQuery } from '@tanstack/react-query';
 import { getEngagementStats } from '../api/articles';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../context/AuthCt';
 
 export const Analytics = () => {
   const { t } = useTranslation();
+  const { tokens, isAuthenticated } = useAuth();
+  
   const { data: stats, isLoading, error } = useQuery({
     queryKey: ['engagementStats'],
-    queryFn: getEngagementStats,
+    queryFn: () => getEngagementStats(tokens.accessToken || undefined),
   });
+
+  if (!isAuthenticated) {
+    return (
+      <div className="auth-required">
+        <h2>{t('analytics.authRequired')}</h2>
+        <p>{t('analytics.loginToView')}</p>
+        <Link to="/login" className="auth-button">{t('auth.login')}</Link>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return <div className="loading">{t('articles.loading')}</div>;

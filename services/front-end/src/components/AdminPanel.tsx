@@ -1,12 +1,23 @@
 import { useQuery } from '@tanstack/react-query';
 import { getArticles, getEngagementStats, triggerIngest } from '../api/articles';
+import { getUsers, getSystemStats, setUserAsAdmin } from '../api/admin';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../context/AuthCt';
 
 export const AdminPanel = () => {
   const { t } = useTranslation();
+  const { tokens } = useAuth();
   const [ingestStatus, setIngestStatus] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [adminUsername, setAdminUsername] = useState('');
+  const [adminSetStatus, setAdminSetStatus] = useState<string | null>(null);
+  
+  // Validate that we have a token before making protected requests
+  const accessToken = tokens.accessToken;
+  if (!accessToken) {
+    return <div className="error">{t('auth.adminAccessRequired')}</div>;
+  }
   
   const { data, isLoading, error } = useQuery({
     queryKey: ['articlesAdmin', refreshKey],
@@ -19,14 +30,26 @@ export const AdminPanel = () => {
 
   const { data: statsData, isLoading: statsLoading } = useQuery({
     queryKey: ['engagementStats', refreshKey],
-    queryFn: getEngagementStats,
+    queryFn: () => getEngagementStats(accessToken),
+    staleTime: 30 * 1000,
+  });
+  
+  const { data: usersData, isLoading: usersLoading } = useQuery({
+    queryKey: ['users', refreshKey],
+    queryFn: () => getUsers(accessToken),
+    staleTime: 30 * 1000,
+  });
+  
+  const { data: systemStats, isLoading: systemStatsLoading } = useQuery({
+    queryKey: ['systemStats', refreshKey],
+    queryFn: () => getSystemStats(accessToken),
     staleTime: 30 * 1000,
   });
 
   const handleTriggerIngest = async () => {
     try {
       setIngestStatus('Loading...');
-      const result = await triggerIngest();
+      const result = await triggerIngest(accessToken);
       setIngestStatus(`Success! Imported ${result.articleIds.length} articles.`);
       setRefreshKey(k => k + 1);
     } catch (error) {
@@ -37,9 +60,31 @@ export const AdminPanel = () => {
   const handleRefreshData = () => {
     setRefreshKey(k => k + 1);
   };
+  
+  const handleSetAdmin = async () => {
+    if (!adminUsername) {
+      setAdminSetStatus('Please enter a username');
+      return;
+    }
+    
+    try {
+      setAdminSetStatus('Processing...');
+      const result = await setUserAsAdmin(adminUsername, accessToken);
+      setAdminSetStatus(`Success: ${result.message}`);
+      setAdminUsername('');
+      setRefreshKey(k => k + 1);
+    } catch (error) {
+      setAdminSetStatus(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
 
-  if (isLoading || statsLoading) return <div className="loading">{t('admin.loading')}</div>;
-  if (error) return <div className="error">Error loading data: {error instanceof Error ? error.message : 'Unknown error'}</div>;
+  if (isLoading || statsLoading || usersLoading || systemStatsLoading) {
+    return <div className="loading">{t('admin.loading')}</div>;
+  }
+  
+  if (error) {
+    return <div className="error">Error loading data: {error instanceof Error ? error.message : 'Unknown error'}</div>;
+  }
 
   const articles = data?.articles || [];
   
@@ -121,6 +166,54 @@ export const AdminPanel = () => {
           </button>
         </div>
         {ingestStatus && <div className="status-message">{ingestStatus}</div>}
+      </div>
+      
+      <div className="admin-card">
+        <h3>{t('admin.userManagement')}</h3>
+        <div className="admin-form">
+          <div className="form-control">
+            <label htmlFor="adminUsername">{t('admin.setUserAsAdmin')}</label>
+            <div className="input-group">
+              <input
+                type="text"
+                id="adminUsername"
+                value={adminUsername}
+                onChange={(e) => setAdminUsername(e.target.value)}
+                placeholder={t('admin.enterUsername')}
+              />
+              <button onClick={handleSetAdmin} className="primary-button">
+                {t('admin.setAsAdmin')}
+              </button>
+            </div>
+          </div>
+          {adminSetStatus && <div className="status-message">{adminSetStatus}</div>}
+        </div>
+        
+        {usersData && (
+          <div className="admin-users">
+            <h4>{t('admin.usersList')}</h4>
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>{t('admin.username')}</th>
+                  <th>{t('admin.email')}</th>
+                  <th>{t('admin.name')}</th>
+                  <th>{t('admin.role')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {usersData.users.map((user) => (
+                  <tr key={user.username}>
+                    <td>{user.username}</td>
+                    <td>{user.attributes?.email}</td>
+                    <td>{user.attributes?.name}</td>
+                    <td>{user.attributes?.['custom:role'] || 'user'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
       
       {statsData && (
