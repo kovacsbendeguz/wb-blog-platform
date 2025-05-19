@@ -2,6 +2,10 @@
 
 A scalable, serverless blog platform built with MERN stack (TypeScript) and AWS services that supports article publishing, user engagement tracking, and real-time analytics.
 
+## Live Demo
+
+The application is available at [https://wb-blog-platform.com](https://main.d24ldv2sph20ub.amplifyapp.com)
+
 ## Implementation Levels
 
 | Area | Level | Description |
