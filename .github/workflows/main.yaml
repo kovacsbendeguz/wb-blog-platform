@@ -1,6 +1,7 @@
 name: CI/CD (Build, Test & Infra Deploy)
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
   pull_request:
