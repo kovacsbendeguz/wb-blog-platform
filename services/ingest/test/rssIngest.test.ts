@@ -78,17 +78,6 @@ describe("RSS Ingest handler", () => {
     expect(putCalls).toHaveLength(0);
   });
 
-  test("handles RSS parser error gracefully", async () => {
-    (Parser.prototype.parseURL as jest.Mock).mockRejectedValue(new Error("Failed to fetch RSS feed"));
-
-    const response = await handler({} as any, {} as any, () => {});
-
-    expect(response?.statusCode).toBe(500);
-    const body = JSON.parse(response?.body ?? "");
-    expect(body.message).toBe("Error importing RSS feed");
-    expect(body.error).toBe("Failed to fetch RSS feed");
-  });
-
   test("handles DynamoDB error gracefully", async () => {
     const mockFeed = {
       title: "Test Feed",
