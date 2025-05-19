@@ -1,7 +1,7 @@
 import { Article, CreateArticlePayload, ArticleMetrics } from "../types";
 
 const API_URL =
-  "https://b5w4i622r3.execute-api.eu-central-1.amazonaws.com/prod";
+  "https://zygx78ohoe.execute-api.eu-central-1.amazonaws.com/prod";
 
 export const getArticles = async (limit: number = 10, nextToken?: string): Promise<{
   articles: Article[];

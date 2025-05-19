@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { getArticle, updateArticleMetrics } from '../api/articles';
 import { useTranslation } from 'react-i18next';
+import { Article } from '../types';
 
 export const ArticleDetail = () => {
   const { t, i18n } = useTranslation();
@@ -19,17 +20,34 @@ export const ArticleDetail = () => {
     enabled: !!id,
   });
 
-  const updateMetricsMutation = useMutation({
-    mutationFn: (metrics: { incrementView?: boolean; timeSpent?: number; rating?: number }) => 
+  const viewMetricsMutation = useMutation({
+    mutationFn: (metrics: { incrementView?: boolean; timeSpent?: number }) => 
       updateArticleMetrics(id!, metrics),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['article', id] });
     },
   });
 
+  const ratingMutation = useMutation({
+    mutationFn: (rating: number) => {
+      console.log(`Submitting rating ${rating} for article ${id}`);
+      return updateArticleMetrics(id!, { rating });
+    },
+    onSuccess: () => {
+      console.log("Rating submitted successfully");
+      setShowRatingSuccess(true);
+      setTimeout(() => setShowRatingSuccess(false), 3000);
+      
+      queryClient.invalidateQueries({ queryKey: ['article', id] });
+    },
+    onError: (error) => {
+      console.error("Error submitting rating:", error);
+    }
+  });
+
   useEffect(() => {
     if (id && !viewTrackedRef.current) {
-      updateMetricsMutation.mutate({ incrementView: true });
+      viewMetricsMutation.mutate({ incrementView: true });
       viewTrackedRef.current = true;
       startTimeRef.current = Date.now();
     }
@@ -39,7 +57,7 @@ export const ArticleDetail = () => {
         const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000);
         if (timeSpent > 5) {
           try {
-            updateMetricsMutation.mutate({ timeSpent });
+            viewMetricsMutation.mutate({ timeSpent });
           } catch (e) {
             console.error("Error updating time spent:", e);
           }
@@ -51,19 +69,7 @@ export const ArticleDetail = () => {
   const handleRating = (rating: number) => {
     if (id) {
       setUserRating(rating);
-      updateMetricsMutation.mutate(
-        { rating },
-        {
-          onSuccess: () => {
-            setShowRatingSuccess(true);
-            setTimeout(() => setShowRatingSuccess(false), 3000);
-          },
-          onError: (error) => {
-            console.error("Error submitting rating:", error);
-            alert("Sorry, there was an error submitting your rating. Please try again later.");
-          }
-        }
-      );
+      ratingMutation.mutate(rating);
     }
   };
 
@@ -79,9 +85,43 @@ export const ArticleDetail = () => {
     return <div className="error">{t('detail.notFound')}</div>;
   }
 
-  const content = typeof article.content === 'string' 
-    ? article.content 
-    : JSON.stringify(article.content) || 'No content available';
+  const getArticleContent = (article: Article): string => {
+    if (!article.content || article.content === "Comments" || article.content === "Comments.") {
+      return `This article discusses the topic of ${article.title}. For more information, you can visit the original source by clicking the link above.`;
+    }
+    
+    let content = typeof article.content === 'string' 
+      ? article.content 
+      : JSON.stringify(article.content) || 'No content available';
+    
+    content = content
+      .replace(/<[^>]*>?/gm, '') // Remove HTML tags
+      .replace(/&nbsp;/g, ' ')   // Replace &nbsp; with spaces
+      .replace(/\s\s+/g, ' ')    // Normalize whitespace
+      .trim();
+    
+    if (content === "Comments" || content === "Comments.") {
+      return `This article discusses the topic of ${article.title}. For more information, you can visit the original source by clicking the link above.`;
+    }
+    
+    return content;
+  };
+
+  const formatContent = (content: string): string[] => {
+    const paragraphs = content.split(/\n+/);
+    if (paragraphs.length > 1) {
+      return paragraphs;
+    }
+    
+    const sentences = content.match(/[^.!?]+[.!?]+/g) || [content];
+    const result: string[] = [];
+    
+    for (let i = 0; i < sentences.length; i += 3) {
+      result.push(sentences.slice(i, i + 3).join(' '));
+    }
+    
+    return result.length > 0 ? result : [content];
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -92,10 +132,19 @@ export const ArticleDetail = () => {
     });
   };
 
+  const content = getArticleContent(article);
+  const paragraphs = formatContent(content);
+
   return (
     <div className="article-detail">
-      <article>
-        <h2>{article.title}</h2>
+      <div className="article-navigation">
+        <Link to="/" className="back-link">
+          ← {t('navigation.home')}
+        </Link>
+      </div>
+      
+      <article className="article-container">
+        <h1 className="article-detail-title">{article.title}</h1>
         <div className="article-meta">
           <p>
             <strong>{t('articles.by')} {article.author}</strong> | {formatDate(article.publishedAt)}
@@ -103,20 +152,20 @@ export const ArticleDetail = () => {
           {article.sourceUrl && (
             <p className="source-link">
               <a href={article.sourceUrl} target="_blank" rel="noopener noreferrer">
-                {t('detail.viewSource')}
+                {t('detail.viewSource')} ↗
               </a>
             </p>
           )}
         </div>
         
         <div className="article-content">
-          {content.split('\n').map((paragraph, index) => (
+          {paragraphs.map((paragraph: string, index: number) => (
             <p key={index}>{paragraph}</p>
           ))}
         </div>
         
-        <div className="article-metrics">
-          <h4>{t('detail.metrics.title')}</h4>
+        <div className="article-metrics-container">
+          <h3 className="metrics-title">{t('detail.metrics.title')}</h3>
           <div className="metrics-data">
             <div className="metric-item">
               <span className="metric-icon">👁️</span>
@@ -136,25 +185,25 @@ export const ArticleDetail = () => {
           </div>
           
           <div className="rating-container">
-            <h5>{t('detail.rateArticle')}</h5>
+            <h4 className="rating-title">{t('detail.rateArticle')}</h4>
             <div className="star-rating">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
                   onClick={() => handleRating(star)}
                   className={`star-button ${userRating && star <= userRating ? 'active' : ''}`}
-                  disabled={updateMetricsMutation.isPending}
+                  disabled={ratingMutation.isPending}
                   aria-label={`Rate ${star} stars`}
                 >
                   ⭐
                 </button>
               ))}
             </div>
-            {updateMetricsMutation.isPending && <div className="rating-loading">Submitting rating...</div>}
-            {updateMetricsMutation.isError && (
+            {ratingMutation.isPending && <div className="rating-loading">Submitting rating...</div>}
+            {ratingMutation.isError && (
               <div className="rating-error">
-                Error saving rating: {updateMetricsMutation.error instanceof Error ? 
-                  updateMetricsMutation.error.message : 'Unknown error'}
+                Error saving rating: {ratingMutation.error instanceof Error ? 
+                  ratingMutation.error.message : 'Unknown error'}
               </div>
             )}
             {showRatingSuccess && (

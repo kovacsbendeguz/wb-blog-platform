@@ -21,7 +21,7 @@
     "success": "Article published successfully!",
     "error": "Error creating article"
   },
-    "admin": {
+  "admin": {
     "title": "Admin Control Panel",
     "contentStatistics": "Content Statistics",
     "totalArticles": "Total Articles",
@@ -35,13 +35,16 @@
     "triggerRssImport": "Trigger RSS Import",
     "refreshData": "Refresh Data",
     "loading": "Loading admin data...",
-    "engagementOverview": "Engagement Overview"
+    "engagementOverview": "Engagement Overview",
+    "mostViewedArticles": "Most Viewed Articles",
+    "totalTimeSpent": "Total Time Spent"
   },
   "articles": {
     "title": "Latest Articles",
     "readMore": "Read more",
     "by": "By",
-    "empty": "No articles found. Create your first one!",
+    "empty": "No articles found yet",
+    "emptyDescription": "Start your journey by creating your first article!",
     "loading": "Loading articles...",
     "nextPage": "Next Page",
     "previousPage": "Previous Page"
@@ -55,7 +58,7 @@
     "metrics": {
       "title": "Metrics",
       "views": "Views",
-      "timeSpent": "Average Time Spent",
+      "timeSpent": "Total Time Spent",
       "seconds": "seconds",
       "rating": "Rating"
     }
@@ -65,6 +68,7 @@
     "totalArticles": "Total Articles",
     "averageViews": "Avg. Views",
     "averageTimeSpent": "Avg. Time Spent",
+    "totalTimeSpent": "Total Time Spent",
     "averageRating": "Avg. Rating",
     "topArticlesByViews": "Most Viewed Articles",
     "topArticlesByEngagement": "Most Engaging Articles",

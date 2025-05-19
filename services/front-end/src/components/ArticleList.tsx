@@ -4,6 +4,7 @@ import { getArticles } from '../api/articles';
 import { Article } from '../types';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { EmptyState } from './EmptyState';
 
 export const ArticleList = () => {
   const { t, i18n } = useTranslation();
@@ -47,7 +48,7 @@ export const ArticleList = () => {
   }
 
   if (!data?.articles || data.articles.length === 0) {
-    return <div>{t('articles.empty')}</div>;
+    return <EmptyState />;
   }
 
   const formatDate = (dateString: string) => {
@@ -59,29 +60,65 @@ export const ArticleList = () => {
     });
   };
 
+  const getContentSnippet = (article: Article): string => {
+    let content: string;
+    
+    if (typeof article.content === 'string' && article.content.trim() !== 'Comments') {
+      content = article.content;
+    } else if (typeof article.content === 'object' && article.content !== null) {
+      content = JSON.stringify(article.content);
+    } else {
+      return `This article discusses ${article.title}. Click to read more about this topic.`;
+    }
+    
+    content = content
+      .replace(/<[^>]*>?/gm, '') // Remove HTML tags
+      .replace(/&nbsp;/g, ' ')   // Replace &nbsp; with spaces
+      .replace(/\s\s+/g, ' ')    // Normalize whitespace
+      .trim();
+    
+    if (content.trim() === 'Comments') {
+      return `Read this article about ${article.title} by ${article.author}.`;
+    }
+    
+    const maxLength = 150;
+    if (content.length <= maxLength) return content;
+    
+    const lastSpace = content.lastIndexOf(' ', maxLength);
+    const breakPoint = lastSpace > maxLength / 2 ? lastSpace : maxLength;
+    
+    return `${content.substring(0, breakPoint)}...`;
+  };
+
   return (
-    <div>
+    <div className="articles-section">
       <h2>{t('articles.title')}</h2>
       <div className="articles-grid">
         {data.articles.map((article: Article) => (
-          <div key={article.articleId} className="article-card">
-            <h3>{article.title}</h3>
-            <p className="article-meta">
-              <strong>{t('articles.by')} {article.author}</strong> | <span className="article-date">{formatDate(article.publishedAt)}</span>
-            </p>
-            <p className="article-excerpt">
-              {typeof article.content === 'string' 
-                ? article.content.length > 150 
-                  ? `${article.content.substring(0, 150)}...` 
-                  : article.content
-                : 'No content available'}
-            </p>
-            <div className="article-preview-metrics">
-              <span title={t('detail.metrics.views')}>👁️ {article.metrics?.views || 0}</span>
-              <span title={t('detail.metrics.rating')}>⭐ {article.metrics?.rating ? article.metrics.rating.toFixed(1) : '0.0'}</span>
+          <Link 
+            to={`/articles/${article.articleId}`} 
+            className="article-card-link"
+            key={article.articleId}
+          >
+            <div className="article-card">
+              <h3 className="article-title">{article.title}</h3>
+              <p className="article-meta">
+                <strong>{t('articles.by')} {article.author}</strong> | <span className="article-date">{formatDate(article.publishedAt)}</span>
+              </p>
+              
+              <p className="article-excerpt">
+                {getContentSnippet(article)}
+              </p>
+              
+              <div className="article-footer">
+                <div className="article-preview-metrics">
+                  <span title={t('detail.metrics.views')}>👁️ {article.metrics?.views || 0}</span>
+                  <span title={t('detail.metrics.rating')}>⭐ {article.metrics?.rating ? article.metrics.rating.toFixed(1) : '0.0'}</span>
+                </div>
+                <span className="read-more">{t('articles.readMore')} →</span>
+              </div>
             </div>
-            <Link to={`/articles/${article.articleId}`} className="read-more-link">{t('articles.readMore')}</Link>
-          </div>
+          </Link>
         ))}
       </div>
       

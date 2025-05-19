@@ -9,13 +9,6 @@
     "analytics": "التحليلات",
     "admin": "الإدارة"
   },
-  "articles": {
-    "title": "أحدث المقالات",
-    "readMore": "قراءة المزيد",
-    "by": "بواسطة",
-    "empty": "لا توجد مقالات. أنشئ أول مقال!",
-    "loading": "جاري تحميل المقالات..."
-  },
   "create": {
     "title": "إنشاء مقال جديد",
     "form": {
@@ -28,9 +21,38 @@
     "success": "تم نشر المقال بنجاح!",
     "error": "خطأ في إنشاء المقال"
   },
+  "admin": {
+    "title": "لوحة تحكم المسؤول",
+    "contentStatistics": "إحصائيات المحتوى",
+    "totalArticles": "إجمالي المقالات",
+    "uniqueAuthors": "الكتّاب الفريدون",
+    "avgContentLength": "متوسط طول المحتوى",
+    "topAuthors": "أفضل الكتّاب",
+    "author": "الكاتب",
+    "article": "مقال",
+    "articles": "مقالات",
+    "contentManagement": "إدارة المحتوى",
+    "triggerRssImport": "بدء استيراد RSS",
+    "refreshData": "تحديث البيانات",
+    "loading": "جاري تحميل بيانات الإدارة...",
+    "engagementOverview": "نظرة عامة على التفاعل"
+  },
+  "articles": {
+    "title": "أحدث المقالات",
+    "readMore": "قراءة المزيد",
+    "by": "بواسطة",
+    "loading": "جاري تحميل المقالات...",
+    "nextPage": "الصفحة التالية",
+    "previousPage": "الصفحة السابقة",
+    "empty": "لم يتم العثور على مقالات بعد",
+    "emptyDescription": "ابدأ رحلتك بإنشاء مقالتك الأولى!"
+  },
   "detail": {
     "loading": "جاري تحميل المقال...",
     "notFound": "المقال غير موجود",
+    "viewSource": "عرض المصدر الأصلي",
+    "rateArticle": "قيّم هذا المقال",
+    "ratingSuccess": "شكراً لتقييمك!",
     "metrics": {
       "title": "المقاييس",
       "views": "المشاهدات",
@@ -42,22 +64,14 @@
   "analytics": {
     "title": "لوحة التحليلات",
     "totalArticles": "إجمالي المقالات",
-    "topAuthors": "أفضل الكتاب",
-    "recentActivity": "النشاط الأخير",
-    "noData": "لا توجد بيانات للكتاب"
-  },
-  "admin": {
-    "title": "لوحة التحكم",
-    "contentStatistics": "إحصائيات المحتوى",
-    "totalArticles": "إجمالي المقالات",
-    "uniqueAuthors": "كتاب فريدون",
-    "avgContentLength": "متوسط طول المحتوى",
-    "topAuthors": "أفضل الكتاب",
-    "author": "الكاتب",
-    "articles": "المقالات",
-    "contentManagement": "إدارة المحتوى",
-    "triggerRssImport": "استيراد RSS",
-    "refreshData": "تحديث البيانات",
-    "loading": "جاري تحميل بيانات الإدارة..."
+    "averageViews": "متوسط المشاهدات",
+    "averageTimeSpent": "متوسط الوقت المستغرق",
+    "averageRating": "متوسط التقييم",
+    "topArticlesByViews": "المقالات الأكثر مشاهدة",
+    "topArticlesByEngagement": "المقالات الأكثر تفاعلاً",
+    "topArticlesByRating": "المقالات الأعلى تقييماً",
+    "topAuthors": "أفضل الكتّاب",
+    "recentActivity": "النشاط الأخير للنشر",
+    "noData": "لا توجد بيانات متاحة للكتّاب"
   }
 }

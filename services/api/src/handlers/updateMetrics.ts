@@ -1,18 +1,10 @@
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { 
-  DynamoDBDocumentClient, 
-  QueryCommand, 
-  UpdateCommand,
-  QueryCommandInput, 
-  UpdateCommandInput 
-} from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, QueryCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 
-const TABLE = process.env.TABLE_NAME!;
-const GSI_NAME = 'ArticleIdIndex';
-
-const client = new DynamoDBClient({});
-const docClient = DynamoDBDocumentClient.from(client);
+const TABLE = process.env.TABLE_NAME || '';
+const ddbClient = new DynamoDBClient({});
+const docClient = DynamoDBDocumentClient.from(ddbClient);
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -24,14 +16,8 @@ interface ArticleMetrics {
   views: number;
   timeSpent: number;
   rating: number;
-}
-
-interface Article {
-  PK: string;
-  publishedAt: string;
-  articleId: string;
-  metrics?: ArticleMetrics;
-  [key: string]: any;
+  ratingCount?: number;
+  totalRating?: number;
 }
 
 export const handler: APIGatewayProxyHandler = async (event) => {
@@ -70,9 +56,9 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     const metricsData = JSON.parse(event.body);
     console.log(`Updating metrics for article ${articleId}:`, metricsData);
 
-    const queryParams: QueryCommandInput = {
+    const queryParams = {
       TableName: TABLE,
-      IndexName: GSI_NAME,
+      IndexName: 'ArticleIdIndex',
       KeyConditionExpression: 'articleId = :articleId',
       ExpressionAttributeValues: {
         ':articleId': articleId
@@ -89,7 +75,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       };
     }
 
-    const article = queryResult.Items[0] as Article;
+    const article = queryResult.Items[0];
     console.log('Found article:', article);
 
     if (!article.PK || !article.publishedAt) {
@@ -103,45 +89,52 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       };
     }
 
-    const currentMetrics: ArticleMetrics = article.metrics || { views: 0, timeSpent: 0, rating: 0 };
+    const currentMetrics: ArticleMetrics = article.metrics || { 
+      views: 0, 
+      timeSpent: 0, 
+      rating: 0,
+      ratingCount: 0,
+      totalRating: 0
+    };
     
-    let newMetrics: ArticleMetrics;
+    let newMetrics: ArticleMetrics = { ...currentMetrics };
+    let updateExpression = 'SET #metricsAttr = :metricsValue';
     
     if (metricsData.incrementView) {
-      newMetrics = {
-        ...currentMetrics,
-        views: (currentMetrics.views || 0) + 1
-      };
-    } else if (metricsData.timeSpent) {
-      newMetrics = {
-        ...currentMetrics,
-        timeSpent: Math.round(((currentMetrics.timeSpent || 0) + metricsData.timeSpent) / 2)
-      };
-    } else if (metricsData.rating) {
-      newMetrics = {
-        ...currentMetrics,
-        rating: metricsData.rating
-      };
-    } else {
-      newMetrics = currentMetrics;
+      newMetrics.views = (currentMetrics.views || 0) + 1;
+    } 
+    
+    if (metricsData.timeSpent) {
+      newMetrics.timeSpent = (currentMetrics.timeSpent || 0) + metricsData.timeSpent;
+    } 
+    
+    if (metricsData.rating) {
+      const newRatingCount = (currentMetrics.ratingCount || 0) + 1;
+      const newTotalRating = (currentMetrics.totalRating || 0) + metricsData.rating;
+      
+      const newAvgRating = newTotalRating / newRatingCount;
+      
+      newMetrics.rating = Math.round(newAvgRating * 10) / 10;
+      newMetrics.ratingCount = newRatingCount;
+      newMetrics.totalRating = newTotalRating;
     }
     
     console.log('New metrics:', newMetrics);
     
-    const updateParams: UpdateCommandInput = {
+    const updateParams = {
       TableName: TABLE,
       Key: {
         PK: article.PK,
         publishedAt: article.publishedAt
       },
-      UpdateExpression: 'SET #metricsAttr = :metricsValue',
+      UpdateExpression: updateExpression,
       ExpressionAttributeNames: {
         '#metricsAttr': 'metrics'
       },
       ExpressionAttributeValues: {
         ':metricsValue': newMetrics
       },
-      ReturnValues: 'UPDATED_NEW'
+      ReturnValues: 'UPDATED_NEW' as const
     };
     
     const updateResult = await docClient.send(new UpdateCommand(updateParams));

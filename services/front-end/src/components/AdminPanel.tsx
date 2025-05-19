@@ -35,7 +35,16 @@ export const AdminPanel = () => {
   };
 
   const handleRefreshData = () => {
+    setIngestStatus('Refreshing data...');
     setRefreshKey(k => k + 1);
+    
+    setTimeout(() => {
+      setIngestStatus('Data refreshed successfully');
+      
+      setTimeout(() => {
+        setIngestStatus(null);
+      }, 3000);
+    }, 500);
   };
 
   if (isLoading || statsLoading) return <div className="loading">{t('admin.loading')}</div>;
@@ -113,10 +122,10 @@ export const AdminPanel = () => {
       <div className="admin-card">
         <h3>{t('admin.contentManagement')}</h3>
         <div className="admin-actions">
-          <button onClick={handleTriggerIngest} className="primary-button">
+          <button onClick={handleTriggerIngest} className="primary-button" title="Import articles from RSS feeds">
             {t('admin.triggerRssImport')}
           </button>
-          <button onClick={handleRefreshData} className="secondary-button">
+          <button onClick={handleRefreshData} className="secondary-button" title="Reload data from the database">
             {t('admin.refreshData')}
           </button>
         </div>
@@ -151,7 +160,7 @@ export const AdminPanel = () => {
               <th>{t('admin.article')}</th>
               <th>{t('admin.author')}</th>
               <th>{t('detail.metrics.views')}</th>
-              <th>{t('detail.metrics.timeSpent')}</th>
+              <th>{t('admin.totalTimeSpent')}</th>
               <th>{t('detail.metrics.rating')}</th>
             </tr>
           </thead>

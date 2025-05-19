@@ -21,7 +21,7 @@
     "success": "Article published successfully!",
     "error": "Error creating article"
   },
-    "admin": {
+  "admin": {
     "title": "Admin Control Panel",
     "contentStatistics": "Content Statistics",
     "totalArticles": "Total Articles",
@@ -41,10 +41,11 @@
     "title": "Latest Articles",
     "readMore": "Read more",
     "by": "By",
-    "empty": "No articles found. Create your first one!",
     "loading": "Loading articles...",
     "nextPage": "Next Page",
-    "previousPage": "Previous Page"
+    "previousPage": "Previous Page",
+    "empty": "No articles found yet",
+    "emptyDescription": "Start your journey by creating your first article!"
   },
   "detail": {
     "loading": "Loading article...",

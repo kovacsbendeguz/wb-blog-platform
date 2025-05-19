@@ -99,7 +99,7 @@ export const Analytics = () => {
           <ul className="analytics-list">
             {stats.topAuthors.map(author => (
               <li key={author.author} className="analytics-list-item">
-                <span className="author-name">{author.author}</span>
+                <span className="author-name">{author.author}: </span>
                 <span className="list-item-value">{author.articleCount} {t('admin.articles')}</span>
               </li>
             ))}
