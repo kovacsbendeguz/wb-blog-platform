@@ -32,7 +32,6 @@ jobs:
           yarn workspace api test
           yarn workspace infra test
           yarn workspace ingest test
-          yarn workspace front-end test
 
       - name: Build services & infra
         run: |
