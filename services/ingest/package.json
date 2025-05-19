@@ -10,10 +10,14 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.810.0",
     "@aws-sdk/util-dynamodb": "^3.810.0",
+    "@babel/preset-typescript": "^7.27.1",
     "rss-parser": "^3.13.0",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.27.1",
+    "@babel/preset-env": "^7.27.2",
+    "@babel/preset-typescript": "^7.27.1",
     "@types/aws-lambda": "^8.10.92",
     "@types/jest": "^29.0.0",
     "@types/node": "^18.0.0",

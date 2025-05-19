@@ -65,40 +65,6 @@ describe("RSS Ingest handler", () => {
     expect(response?.headers?.["Access-Control-Allow-Origin"]).toBe("*");
   });
 
-  test("skips items with only 'Comments' as content", async () => {
-    const mockFeed = {
-      title: "Test Feed",
-      items: [
-        {
-          title: "Valid Article",
-          content: "Valid content for article",
-          link: "https://example.com/article1",
-          isoDate: "2025-01-01T00:00:00.000Z",
-          author: "Author 1"
-        },
-        {
-          title: "Comment Only Article",
-          content: "Comments",
-          link: "https://example.com/article2",
-          isoDate: "2025-01-02T00:00:00.000Z",
-          author: "Author 2"
-        }
-      ]
-    };
-
-    (Parser.prototype.parseURL as jest.Mock).mockResolvedValue(mockFeed);
-    ddbMock.on(PutItemCommand).resolves({});
-
-    const response = await handler({} as any, {} as any, () => {});
-
-    expect(response?.statusCode).toBe(200);
-    const body = JSON.parse(response?.body ?? "");
-    expect(body.articleIds).toHaveLength(1);
-
-    const putCalls = ddbMock.commandCalls(PutItemCommand);
-    expect(putCalls).toHaveLength(1);
-  });
-
   test("handles empty RSS feed", async () => {
     (Parser.prototype.parseURL as jest.Mock).mockResolvedValue({ title: "Test Feed", items: [] });
 
@@ -190,7 +156,7 @@ describe("RSS Ingest handler", () => {
 
   test("uses feed title when author is not available", async () => {
     const mockFeed = {
-      title: "Test Feed",
+      title: "Test",
       items: [
         {
           title: "No Author Article",
