@@ -13,7 +13,7 @@ The application is available at [https://wb-blog-platform.com](https://main.d24l
 | **Database** | L3 | Schema diagram for system entities + DynamoDB implementation on AWS + RSS integration for article import |
 | **Backend/API** | L5 | Full API implementation with Swagger documentation, AWS deployment, unit testing, and a daily export job |
 | **Cloud/DevOps** | L3 | System architecture diagram + Cloud infrastructure with AWS CDK + CI/CD pipeline with GitHub Actions |
-| **Frontend** | L5 | Full web application hosted on AWS Amplify with both visualization views and data entry forms |
+| **Frontend** | L6 | Full web application hosted on AWS Amplify with both visualization views and data entry forms with minimal Admin Control Panel |
 | **Monitoring** | L4 | CloudWatch dashboard and Grafana workspace with metrics for system components |
 
 ## Selected Challenge Implementation
