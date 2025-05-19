@@ -1,0 +1,316 @@
+openapi: 3.0.0
+info:
+  title: Serverless News Platform API
+  description: API for a serverless blog platform with user engagement tracking and analytics
+  version: 1.0.0
+servers:
+  - url: https://zygx78ohoe.execute-api.eu-central-1.amazonaws.com/prod
+    description: Production server
+tags:
+  - name: Articles
+    description: Article management endpoints
+  - name: Analytics
+    description: Analytics and statistics endpoints
+  - name: Ingest
+    description: Content ingestion endpoints
+paths:
+  /articles:
+    get:
+      summary: List articles
+      description: Returns a paginated list of articles
+      tags:
+        - Articles
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of articles to return
+          required: false
+          schema:
+            type: integer
+            default: 10
+        - name: nextToken
+          in: query
+          description: Pagination token for fetching next page
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  articles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Article'
+                  nextToken:
+                    type: string
+                    nullable: true
+        '500':
+          description: Internal server error
+    post:
+      summary: Create a new article
+      description: Creates a new article in the system
+      tags:
+        - Articles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateArticleRequest'
+      responses:
+        '201':
+          description: Article created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Article'
+        '400':
+          description: Bad request - missing required fields
+        '500':
+          description: Internal server error
+  /articles/{id}:
+    get:
+      summary: Get article by ID
+      description: Returns a specific article by its ID
+      tags:
+        - Articles
+      parameters:
+        - name: id
+          in: path
+          description: ID of the article to retrieve
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Article'
+        '404':
+          description: Article not found
+        '500':
+          description: Internal server error
+  /articles/{id}/metrics:
+    post:
+      summary: Update article metrics
+      description: Updates metrics for a specific article (views, time spent, rating)
+      tags:
+        - Articles
+      parameters:
+        - name: id
+          in: path
+          description: ID of the article to update metrics for
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMetricsRequest'
+      responses:
+        '200':
+          description: Metrics updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  metrics:
+                    $ref: '#/components/schemas/ArticleMetrics'
+        '404':
+          description: Article not found
+        '500':
+          description: Internal server error
+  /analytics/engagement:
+    get:
+      summary: Get engagement statistics
+      description: Returns statistics about article engagement
+      tags:
+        - Analytics
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngagementStats'
+        '500':
+          description: Internal server error
+  /ingest:
+    post:
+      summary: Trigger RSS ingestion
+      description: Manually triggers ingestion of articles from RSS feeds
+      tags:
+        - Ingest
+      responses:
+        '200':
+          description: Ingestion completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  articleIds:
+                    type: array
+                    items:
+                      type: string
+        '500':
+          description: Ingestion failed
+components:
+  schemas:
+    Article:
+      type: object
+      properties:
+        articleId:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        author:
+          type: string
+        publishedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        metrics:
+          $ref: '#/components/schemas/ArticleMetrics'
+        sourceUrl:
+          type: string
+        importedAt:
+          type: string
+          format: date-time
+      required:
+        - articleId
+        - title
+        - content
+        - author
+        - publishedAt
+    ArticleMetrics:
+      type: object
+      properties:
+        views:
+          type: integer
+          minimum: 0
+        timeSpent:
+          type: integer
+          minimum: 0
+          description: Time spent reading the article in seconds
+        rating:
+          type: number
+          minimum: 0
+          maximum: 5
+          description: Average user rating (0-5)
+        ratingCount:
+          type: integer
+          minimum: 0
+          description: Number of ratings submitted
+        totalRating:
+          type: number
+          minimum: 0
+          description: Sum of all ratings
+    CreateArticleRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        author:
+          type: string
+      required:
+        - title
+        - content
+        - author
+    UpdateMetricsRequest:
+      type: object
+      properties:
+        incrementView:
+          type: boolean
+          description: Whether to increment the view count
+        timeSpent:
+          type: integer
+          minimum: 0
+          description: Additional time spent in seconds
+        rating:
+          type: number
+          minimum: 1
+          maximum: 5
+          description: User rating (1-5)
+    EngagementStats:
+      type: object
+      properties:
+        totalArticles:
+          type: integer
+        topArticlesByViews:
+          type: array
+          items:
+            type: object
+            properties:
+              articleId:
+                type: string
+              title:
+                type: string
+              author:
+                type: string
+              views:
+                type: integer
+        topArticlesByTimeSpent:
+          type: array
+          items:
+            type: object
+            properties:
+              articleId:
+                type: string
+              title:
+                type: string
+              author:
+                type: string
+              timeSpent:
+                type: integer
+        topArticlesByRating:
+          type: array
+          items:
+            type: object
+            properties:
+              articleId:
+                type: string
+              title:
+                type: string
+              author:
+                type: string
+              rating:
+                type: number
+        averageMetrics:
+          type: object
+          properties:
+            views:
+              type: number
+            timeSpent:
+              type: number
+            rating:
+              type: number
+        topAuthors:
+          type: array
+          items:
+            type: object
+            properties:
+              author:
+                type: string
+              articleCount:
+                type: integer
